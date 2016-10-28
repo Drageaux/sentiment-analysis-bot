@@ -1,0 +1,26 @@
+{
+  "name": "sentiment-analysis-bot",
+  "version": "0.1.0",
+  "description": "Slack Sentiment analysis bot/app; potentially a company digital pet",
+  "main": "app.js",
+  "scripts": {
+    "develop": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.14.2",
+    "botkit": "^0.2.2",
+    "dotenv": "^2.0.0",
+    "ejs": "^2.4.1",
+    "express": "^4.13.4",
+    "mongodb": "^1.4.40",
+    "monk": "^1.0.1",
+    "request": "^2.69.0",
+    "unirest": "^0.5.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
+  }
+}
