@@ -98,15 +98,26 @@ controller.hears('^stop', 'direct_message', function (bot, message) {
 controller.on("direct_message,mention,direct_mention", function (bot, message) {
     console.log(message);
     controller.storage.users.get(message.user, function (err, user) {
-        if (!isNaN(user.sentiment)) {
-            bot.reply(message, "Hey @" + user.user + ", your mood today has a value of " + user.sentiment);
+        if (err) {
+            console.log(err);
+            // TODO: create user if user not found
+        } else {
+            // TODO: add reaction to user depending on rating
+            if (!isNaN(user.sentiment)) {
+                bot.reply(message, "Hey @" + user.user + ", your mood today has a value of " + user.sentiment);
+            } else {
+                user.sentiment = 0;
+                controller.storage.users.save(user, function (err, user) {
+                    if (!isNaN(user.sentiment)) {
+                        bot.reply(message, "Hey @" + user.user + ", your mood today has a value of " + user.sentiment);
+                    }
+                });
+            }
         }
     });
 });
 
-controller.on("ambient", function (bot, message) {
-    // TODO: run analysis here
-    console.log(message);
+controller.on("ambient,mention,direct_mention", function (bot, message) {
     unirest.post("https://community-sentiment.p.mashape.com/text/")
         .header("X-Mashape-Key", "hWOV4zrmvnmshrKspMpzeyFmPt48p1xMWR5jsnpqG5887Iyj4v")
         .header("Content-Type", "application/x-www-form-urlencoded")
@@ -131,9 +142,7 @@ controller.on("ambient", function (bot, message) {
                             user.sentiment -= sentimentValue;
                         }
                         controller.storage.users.save(user, function (err, user) {
-                            if (err) {
-                                console.log(err)
-                            }
+                            if (err) { console.log(err) }
                         });
                     }
                 }
