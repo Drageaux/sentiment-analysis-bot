@@ -31,6 +31,39 @@ function trackBot(bot) {
     _bots[bot.config.token] = bot;
 }
 
+controller.on('bot_channel_joined', function (bot) {
+    // message contains data sent by slack
+    // in this case:
+    // https://api.slack.com/events/channel_joined
+    console.log("channel joined");
+    bot.startRTM(function (err) {
+        if (!err) {
+            trackBot(bot);
+            console.log("RTM ok")
+            controller.saveTeam(team, function (err, id) {
+                if (err) {
+                    console.log("Error saving team")
+                }
+                else {
+                    console.log("Team " + team.name + " saved")
+                }
+            })
+        }
+        else {
+            console.log("RTM failed")
+        }
+        bot.startPrivateConversation({user: team.createdBy}, function (err, convo) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    convo.say('I am a bot that has just joined your team');
+                    convo.say('You must now /invite me to a channel so that I can be of use!');
+                }
+            }
+        )
+    });
+});
+
 controller.on('create_bot', function (bot, team) {
 
     if (_bots[bot.config.token]) {
@@ -97,6 +130,7 @@ controller.hears('^stop', 'direct_message', function (bot, message) {
 
 controller.on('direct_message,mention,direct_mention', function (bot, message) {
     // TODO: run analysis here
+    console.log(message);
     unirest.post("https://community-sentiment.p.mashape.com/text/")
         .header("X-Mashape-Key", "hWOV4zrmvnmshrKspMpzeyFmPt48p1xMWR5jsnpqG5887Iyj4v")
         .header("Content-Type", "application/x-www-form-urlencoded")
@@ -104,6 +138,30 @@ controller.on('direct_message,mention,direct_mention', function (bot, message) {
         .send("txt=" + message.text)
         .end(function (result) {
             console.log(result.status, message.text, result.body);
+            controller.storage.users.get(message.user, function (err, user) {
+                if (user) {
+                    if (isNaN(user.sentiment)) {
+                        user.sentiment = 0;
+                    }
+
+                    var confidence = parseInt(result.body.result.confidence);
+                    var sentiment = result.body.result.sentiment;
+                    var sentimentValue = confidence * message.text.split(" ").length;
+
+                    if (!isNaN(sentimentValue)) {
+                        if (sentiment == "Positive") {
+                            user.sentiment += sentimentValue;
+                        } else if (sentiment == "Negative") {
+                            user.sentiment -= sentimentValue;
+                        }
+                        controller.storage.users.save(user, function (err, user) {
+                            if (err) {
+                                console.log(err)
+                            }
+                        });
+                    }
+                }
+            });
         });
     // bot.api.reactions.add({
     //     timestamp: message.ts,
