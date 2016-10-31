@@ -95,9 +95,9 @@ controller.hears('^stop', 'direct_message', function (bot, message) {
     // bot.rtm.close();
 });
 
+controller.on("direct_message,mention,direct_mention", function (bot, message) {
     console.log(message);
     controller.storage.users.get(message.user, function (err, user) {
-
         if (!isNaN(user.sentiment)) {
             bot.reply(message, "Hey @" + user.user + ", your mood today has a value of " + user.sentiment);
         }
