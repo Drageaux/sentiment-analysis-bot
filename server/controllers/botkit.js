@@ -95,28 +95,51 @@ controller.hears('^stop', 'direct_message', function (bot, message) {
     // bot.rtm.close();
 });
 
+/** Return mood value and add reactions */
 controller.on("direct_message,mention,direct_mention", function (bot, message) {
     console.log(message);
     controller.storage.users.get(message.user, function (err, user) {
-        if (err) {
-            console.log(err);
-            // TODO: create user if user not found
-        } else {
-            // TODO: add reaction to user depending on rating
+        if (err || user == null) {
+            user = {
+                id: message.user,
+                team_id: message.team,
+                sentiment: 0
+            };
+        }
+        controller.storage.users.save(user, function (err, user) {
             if (!isNaN(user.sentiment)) {
-                bot.reply(message, "Hey @" + user.user + ", your mood today has a value of " + user.sentiment);
+                bot.reply(message, "Hey <@" + user.id + ">, your mood today has a value of " + user.sentiment);
             } else {
                 user.sentiment = 0;
                 controller.storage.users.save(user, function (err, user) {
                     if (!isNaN(user.sentiment)) {
-                        bot.reply(message, "Hey @" + user.user + ", your mood today has a value of " + user.sentiment);
+                        bot.reply(message, "Hey <@" + user.id + ">, your mood today has a value of " + user.sentiment);
                     }
                 });
             }
-        }
+
+            var reaction = "";
+            if (user.sentiment > 5000){
+                reaction = "satisfied";
+            } else if  (user.sentiment >= 1000 && user.sentiment < 5000) {
+                reaction = "smiley";
+            } else if  (user.sentiment >= -1000 && user.sentiment < 1000) {
+                reaction = "slightly_smiling_face";
+            } else if  (user.sentiment >= -2000 && user.sentiment < -1000) {
+                reaction = "neutral_face";
+            } else if  (user.sentiment < -2000) {
+                reaction = "unamused";
+            }
+            bot.api.reactions.add({
+                timestamp: message.ts,
+                channel: message.channel,
+                name: reaction
+            });
+        });
     });
 });
 
+/** Analyze sentiment */
 controller.on("ambient,mention,direct_mention", function (bot, message) {
     unirest.post("https://community-sentiment.p.mashape.com/text/")
         .header("X-Mashape-Key", "hWOV4zrmvnmshrKspMpzeyFmPt48p1xMWR5jsnpqG5887Iyj4v")
@@ -125,6 +148,11 @@ controller.on("ambient,mention,direct_mention", function (bot, message) {
         .send("txt=" + message.text)
         .end(function (result) {
             console.log(result.status, message.text, result.body);
+            bot.reply(message,
+                "Sentiment: " +
+                result.body.result.sentiment +
+                ". Confidence: " +
+                result.body.result.confidence);
             controller.storage.users.get(message.user, function (err, user) {
                 if (user) {
                     if (isNaN(user.sentiment)) {
@@ -142,7 +170,9 @@ controller.on("ambient,mention,direct_mention", function (bot, message) {
                             user.sentiment -= sentimentValue;
                         }
                         controller.storage.users.save(user, function (err, user) {
-                            if (err) { console.log(err) }
+                            if (err) {
+                                console.log(err)
+                            }
                         });
                     }
                 }
