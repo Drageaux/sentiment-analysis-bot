@@ -119,15 +119,15 @@ controller.on("direct_message,mention,direct_mention", function (bot, message) {
             }
 
             var reaction = "";
-            if (user.sentiment > 5000){
+            if (user.sentiment > 5000) {
                 reaction = "satisfied";
-            } else if  (user.sentiment >= 1000 && user.sentiment < 5000) {
+            } else if (user.sentiment >= 1000 && user.sentiment < 5000) {
                 reaction = "smiley";
-            } else if  (user.sentiment >= -1000 && user.sentiment < 1000) {
+            } else if (user.sentiment >= -1000 && user.sentiment < 1000) {
                 reaction = "slightly_smiling_face";
-            } else if  (user.sentiment >= -2000 && user.sentiment < -1000) {
+            } else if (user.sentiment >= -2000 && user.sentiment < -1000) {
                 reaction = "neutral_face";
-            } else if  (user.sentiment < -2000) {
+            } else if (user.sentiment < -2000) {
                 reaction = "unamused";
             }
             bot.api.reactions.add({
@@ -190,6 +190,30 @@ controller.on("ambient,mention,direct_mention", function (bot, message) {
     // });
 });
 
+
+//MAIN=========================================================================
+var CronJob = require('cron').CronJob;
+var job = new CronJob('00 50 17 * * *', function () {
+        /* runs everyday at 8AM */
+        controller.storage.users.all(function (err, users) {
+            for (var u in users) {
+                users[u].sentiment = 0;
+                controller.storage.users.save(users[u], function (err, user) {
+                    if (err) {
+                        console.log(err)
+                    }
+                });
+            }
+            console.log("MOOD RESET")
+        });
+    }, function () {
+        // this function is executed when the job stops
+        console.log("CRONJOB STOPPED!")
+    },
+    true, /* start the job right now */
+    "America/New_York" /* time zone of this job. */
+);
+
 controller.storage.teams.all(function (err, teams) {
 
     console.log(teams)
@@ -199,7 +223,7 @@ controller.storage.teams.all(function (err, teams) {
     }
 
     // connect all teams with bots up to slack!
-    for (var t  in teams) {
+    for (var t in teams) {
         if (teams[t].bot) {
             var bot = controller.spawn(teams[t]).startRTM(function (err) {
                 if (err) {
