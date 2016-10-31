@@ -13,15 +13,15 @@ if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.PORT) {
 
 var controller = Botkit.slackbot({
     storage: botkit_mongo_storage
-})
+});
 
-exports.controller = controller
+exports.controller = controller;
 
 //CONNECTION FUNCTIONS=====================================================
 exports.connect = function (team_config) {
     var bot = controller.spawn(team_config);
     controller.trigger('create_bot', [bot, team_config]);
-}
+};
 
 // just a simple way to make sure we don't
 // connect to the RTM twice for the same team
@@ -30,39 +30,6 @@ var _bots = {};
 function trackBot(bot) {
     _bots[bot.config.token] = bot;
 }
-
-controller.on('bot_channel_joined', function (bot) {
-    // message contains data sent by slack
-    // in this case:
-    // https://api.slack.com/events/channel_joined
-    console.log("channel joined");
-    bot.startRTM(function (err) {
-        if (!err) {
-            trackBot(bot);
-            console.log("RTM ok")
-            controller.saveTeam(team, function (err, id) {
-                if (err) {
-                    console.log("Error saving team")
-                }
-                else {
-                    console.log("Team " + team.name + " saved")
-                }
-            })
-        }
-        else {
-            console.log("RTM failed")
-        }
-        bot.startPrivateConversation({user: team.createdBy}, function (err, convo) {
-                if (err) {
-                    console.log(err);
-                } else {
-                    convo.say('I am a bot that has just joined your team');
-                    convo.say('You must now /invite me to a channel so that I can be of use!');
-                }
-            }
-        )
-    });
-});
 
 controller.on('create_bot', function (bot, team) {
 
@@ -128,7 +95,16 @@ controller.hears('^stop', 'direct_message', function (bot, message) {
     // bot.rtm.close();
 });
 
-controller.on('direct_message,mention,direct_mention', function (bot, message) {
+    console.log(message);
+    controller.storage.users.get(message.user, function (err, user) {
+
+        if (!isNaN(user.sentiment)) {
+            bot.reply(message, "Hey @" + user.user + ", your mood today has a value of " + user.sentiment);
+        }
+    });
+});
+
+controller.on("ambient", function (bot, message) {
     // TODO: run analysis here
     console.log(message);
     unirest.post("https://community-sentiment.p.mashape.com/text/")
