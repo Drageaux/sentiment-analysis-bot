@@ -193,7 +193,7 @@ controller.on("ambient,mention,direct_mention", function (bot, message) {
 
 //MAIN=========================================================================
 var CronJob = require('cron').CronJob;
-var job = new CronJob('00 50 17 * * *', function () {
+var job = new CronJob('00 00 8 * * *', function () {
         /* runs everyday at 8AM */
         controller.storage.users.all(function (err, users) {
             for (var u in users) {
