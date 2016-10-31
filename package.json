@@ -4,7 +4,7 @@
   "description": "Slack Sentiment analysis bot/app; potentially a company digital pet",
   "main": "app.js",
   "scripts": {
-    "start": "app.js",
+    "start": "node app.js",
     "develop": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
