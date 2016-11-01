@@ -196,7 +196,7 @@ controller.on("ambient,mention,direct_mention", function (bot, message) {
 // Keep Heroku dyno awake
 var http = require("http");
 setInterval(function() {
-    http.get("http://<your app name>.herokuapp.com");
+    http.get("http://sentimental-sentinel.herokuapp.com/");
 }, 1500000); // every 5 minutes (300000)
 
 // Reset sentiment everyday
