@@ -1,6 +1,6 @@
 //CONFIG===============================================
 
-/* Uses the slack button feature to offer a real time bot to multiple teams */
+// Uses the slack button feature to offer a real time bot to multiple teams
 var Botkit = require('botkit');
 var mongoUri = process.env.MONGODB_URI || 'mongodb://localhost/sentiment-analysis';
 var botkit_mongo_storage = require('../../config/botkit_mongo_storage')({mongoUri: mongoUri});
@@ -23,7 +23,7 @@ exports.connect = function (team_config) {
     controller.trigger('create_bot', [bot, team_config]);
 };
 
-// just a simple way to make sure we don't
+// Just a simple way to make sure we don't
 // connect to the RTM twice for the same team
 var _bots = {};
 
@@ -95,7 +95,7 @@ controller.hears('^stop', 'direct_message', function (bot, message) {
     // bot.rtm.close();
 });
 
-/** Return mood value and add reactions */
+// Return mood value and add reactions
 controller.on("direct_message,mention,direct_mention", function (bot, message) {
     console.log(message);
     controller.storage.users.get(message.user, function (err, user) {
@@ -139,7 +139,7 @@ controller.on("direct_message,mention,direct_mention", function (bot, message) {
     });
 });
 
-/** Analyze sentiment */
+// Analyzes sentiment
 controller.on("ambient,mention,direct_mention", function (bot, message) {
     unirest.post("https://community-sentiment.p.mashape.com/text/")
         .header("X-Mashape-Key", "hWOV4zrmvnmshrKspMpzeyFmPt48p1xMWR5jsnpqG5887Iyj4v")
@@ -192,9 +192,17 @@ controller.on("ambient,mention,direct_mention", function (bot, message) {
 
 
 //MAIN=========================================================================
+
+// Keep Heroku dyno awake
+var http = require("http");
+setInterval(function() {
+    http.get("http://<your app name>.herokuapp.com");
+}, 1500000); // every 5 minutes (300000)
+
+// Reset sentiment everyday
 var CronJob = require('cron').CronJob;
 var job = new CronJob('00 00 8 * * *', function () {
-        /* runs everyday at 8AM */
+        // runs everyday at 8AM
         controller.storage.users.all(function (err, users) {
             for (var u in users) {
                 users[u].sentiment = 0;
@@ -210,8 +218,8 @@ var job = new CronJob('00 00 8 * * *', function () {
         // this function is executed when the job stops
         console.log("CRONJOB STOPPED!")
     },
-    true, /* start the job right now */
-    "America/New_York" /* time zone of this job. */
+    true, // start the job right now
+    "America/New_York" // time zone of this job
 );
 
 controller.storage.teams.all(function (err, teams) {
