@@ -82,6 +82,16 @@ controller.on('rtm_open', function (bot) {
 controller.on('rtm_close', function (bot) {
     console.log('** The RTM api just closed');
     // you may want to attempt to re-open
+    bot.startRTM(function (err) {
+        if (!err) {
+            trackBot(bot);
+
+            console.log("RTM ok")
+        } else {
+            console.log("RTM failed")
+        }
+
+    });
 });
 
 //DIALOG ======================================================================
@@ -90,10 +100,10 @@ controller.hears('hello', 'direct_message', function (bot, message) {
     bot.reply(message, 'Hello!');
 });
 
-controller.hears('^stop', 'direct_message', function (bot, message) {
+// controller.hears('stop', 'direct_message', function (bot, message) {
     // bot.reply(message, 'Goodbye');
     // bot.rtm.close();
-});
+// });
 
 // Return mood value and add reactions
 controller.on("direct_message,mention,direct_mention", function (bot, message) {
@@ -195,7 +205,7 @@ controller.on("ambient,mention,direct_mention", function (bot, message) {
 
 // Keep Heroku dyno awake
 var http = require("http");
-setInterval(function() {
+setInterval(function () {
     http.get("http://sentimental-sentinel.herokuapp.com/");
 }, 1500000); // every 5 minutes (300000)
 
